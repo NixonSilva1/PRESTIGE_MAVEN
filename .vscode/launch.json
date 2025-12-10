@@ -9,6 +9,13 @@
             "name": "Main",
             "request": "launch",
             "mainClass": "app.Main",
+            "projectName": "PRESTIGE_MAVEN_25dc3fd2"
+        },
+        {
+            "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "app.Main",
             "projectName": "PRESTIGE_MAVEN_a1668c6b"
         },
         {

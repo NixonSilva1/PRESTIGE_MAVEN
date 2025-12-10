@@ -133,7 +133,7 @@ public class CateringMenuFrame extends JDialog {
         return section;
     }
     
-    private JPanel createMenuOption(String title, String description, 
+    private JPanel createMenuOption(String title, String description,
                                     ButtonGroup group, String menuName) {
         JPanel panel = new JPanel(new BorderLayout(15, 10));
         panel.setBackground(Color.WHITE);
@@ -142,7 +142,7 @@ public class CateringMenuFrame extends JDialog {
             BorderFactory.createEmptyBorder(15, 20, 15, 20)
         ));
         
-        // Radio button
+        // Radio button (izquierda)
         JRadioButton radioButton = new JRadioButton();
         radioButton.setBackground(Color.WHITE);
         radioButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -152,7 +152,7 @@ public class CateringMenuFrame extends JDialog {
         });
         group.add(radioButton);
         
-        // Información del menú
+        // Información del menú (centro)
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
@@ -173,10 +173,99 @@ public class CateringMenuFrame extends JDialog {
         infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
         infoPanel.add(descArea);
         
+        // NUEVO: Panel de imagen (derecha)
+        JPanel imagePanel = createMenuImage(menuName);
+        
         panel.add(radioButton, BorderLayout.WEST);
         panel.add(infoPanel, BorderLayout.CENTER);
+        panel.add(imagePanel, BorderLayout.EAST);
         
         return panel;
+    }
+    
+    private JPanel createMenuImage(String menuName) {
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setPreferredSize(new Dimension(120, 100));
+        imagePanel.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
+        
+        // Mapeo de nombres a archivos de imagen
+        String imageName = switch (menuName) {
+            case "Classic Menu" -> "classic_menu.jpg";
+            case "Mediterranean Menu" -> "mediterranean_menu.jpg";
+            case "Gourmet Menu" -> "gourmet_menu.jpg";
+            case "Vegetarian Menu" -> "vegetarian_menu.jpg";
+            case "Seafood Deluxe Menu" -> "seafood_menu.jpg";
+            default -> null;
+        };
+        
+        if (imageName != null) {
+            try {
+                // Intentar cargar desde el classpath primero
+                java.net.URL imageUrl = getClass().getResource("/images/" + imageName);
+                
+                if (imageUrl != null) {
+                    ImageIcon originalIcon = new ImageIcon(imageUrl);
+                    Image scaledImage = originalIcon.getImage().getScaledInstance(
+                        120, 100, Image.SCALE_SMOOTH);
+                    ImageIcon scaledIcon = new ImageIcon(scaledImage);
+                    
+                    JLabel imageLabel = new JLabel(scaledIcon);
+                    imagePanel.add(imageLabel, BorderLayout.CENTER);
+                } else {
+                    // Si no se encuentra, intentar desde el sistema de archivos
+                    String filePath = "src/main/resources/images/" + imageName;
+                    java.io.File imageFile = new java.io.File(filePath);
+                    
+                    if (imageFile.exists()) {
+                        ImageIcon originalIcon = new ImageIcon(filePath);
+                        Image scaledImage = originalIcon.getImage().getScaledInstance(
+                            120, 100, Image.SCALE_SMOOTH);
+                        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+                        
+                        JLabel imageLabel = new JLabel(scaledIcon);
+                        imagePanel.add(imageLabel, BorderLayout.CENTER);
+                    } else {
+                        addMenuPlaceholder(imagePanel, menuName);
+                    }
+                }
+            } catch (Exception e) {
+                addMenuPlaceholder(imagePanel, menuName);
+            }
+        } else {
+            addMenuPlaceholder(imagePanel, menuName);
+        }
+        
+        return imagePanel;
+    }
+    
+    private void addMenuPlaceholder(JPanel imagePanel, String menuName) {
+        // Color de fondo según el menú
+        Color backgroundColor;
+        
+        if (menuName == null) {
+            backgroundColor = new Color(149, 165, 166);
+        } else {
+            backgroundColor = switch (menuName) {
+                case "Classic Menu" -> new Color(231, 76, 60);           // Rojo
+                case "Mediterranean Menu" -> new Color(52, 152, 219);    // Azul
+                case "Gourmet Menu" -> new Color(155, 89, 182);          // Púrpura
+                case "Vegetarian Menu" -> new Color(46, 204, 113);       // Verde
+                case "Seafood Deluxe Menu" -> new Color(26, 188, 156);   // Turquesa
+                default -> new Color(149, 165, 166);                     // Gris
+            };
+        }
+        
+        imagePanel.setBackground(backgroundColor);
+        
+        // Primera letra del menú
+        String displayText = (menuName != null) ? menuName.substring(0, 1).toUpperCase() : "?";
+        
+        JLabel textLabel = new JLabel(displayText);
+        textLabel.setFont(new Font("Segoe UI", Font.BOLD, 48));
+        textLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        textLabel.setForeground(Color.WHITE);
+        
+        imagePanel.add(textLabel, BorderLayout.CENTER);
     }
     
     private JPanel createBeveragesSection() {

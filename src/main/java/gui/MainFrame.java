@@ -308,6 +308,9 @@ public class MainFrame extends JFrame {
             BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
         
+        // NUEVO: Panel de imagen a la izquierda
+        JPanel imagePanel = createVenueImage(name);
+        
         // Información
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
@@ -355,18 +358,107 @@ public class MainFrame extends JFrame {
         
         selectButton.addActionListener(e -> {
             selectedVenue = new Venue(name, capacity);
-            selectedVenuePrice = price; // GUARDAR EL PRECIO
-            recalculateTotalPrice(); // RECALCULAR TODO
+            selectedVenuePrice = price;
+            recalculateTotalPrice();
             
             JOptionPane.showMessageDialog(this, 
                 "Venue Selected!\n" + name + " - $" + String.format("%.2f", price),
                 "Success", JOptionPane.INFORMATION_MESSAGE);
         });
         
+        // NUEVO: Agregar imagen a la izquierda
+        venuePanel.add(imagePanel, BorderLayout.WEST);
         venuePanel.add(infoPanel, BorderLayout.CENTER);
         venuePanel.add(selectButton, BorderLayout.EAST);
         
         panel.add(venuePanel);
+    }
+
+    private JPanel createVenueImage(String venueName) {
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setPreferredSize(new Dimension(150, 120));
+        imagePanel.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
+        
+        // Mapeo de nombres a archivos de imagen
+        String imageName = switch (venueName) {
+            case "Hospice Club" -> "hospice_club.jpg";
+            case "house of mystery" -> "house_of_mystery.jpg";
+            case "Executive Hall" -> "executive_hall.jpg";
+            case "Ocean View Terrace" -> "ocean_view.jpg";
+            case "Intimate Lounge" -> "intimate_lounge.jpg";
+            default -> null;
+        };
+        
+        if (imageName != null) {
+            try {
+                // Intentar cargar desde el classpath primero
+                java.net.URL imageUrl = getClass().getResource("/images/" + imageName);
+                
+                if (imageUrl != null) {
+                    // Si se encuentra en el classpath
+                    ImageIcon originalIcon = new ImageIcon(imageUrl);
+                    Image scaledImage = originalIcon.getImage().getScaledInstance(
+                        150, 120, Image.SCALE_SMOOTH);
+                    ImageIcon scaledIcon = new ImageIcon(scaledImage);
+                    
+                    JLabel imageLabel = new JLabel(scaledIcon);
+                    imagePanel.add(imageLabel, BorderLayout.CENTER);
+                } else {
+                    // Si no se encuentra, intentar desde el sistema de archivos
+                    String filePath = "src/main/resources/images/" + imageName;
+                    java.io.File imageFile = new java.io.File(filePath);
+                    
+                    if (imageFile.exists()) {
+                        ImageIcon originalIcon = new ImageIcon(filePath);
+                        Image scaledImage = originalIcon.getImage().getScaledInstance(
+                            150, 120, Image.SCALE_SMOOTH);
+                        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+                        
+                        JLabel imageLabel = new JLabel(scaledIcon);
+                        imagePanel.add(imageLabel, BorderLayout.CENTER);
+                    } else {
+                        // Si tampoco existe el archivo, mostrar placeholder
+                        addPlaceholder(imagePanel, venueName);
+                    }
+                }
+            } catch (Exception e) {
+                addPlaceholder(imagePanel, venueName);
+            }
+        } else {
+            addPlaceholder(imagePanel, venueName);
+        }
+        
+        return imagePanel;
+    }
+
+    private void addPlaceholder(JPanel imagePanel, String venueName) {
+        // Color de fondo según el venue
+        Color backgroundColor;
+        
+        if (venueName == null) {
+            backgroundColor = new Color(149, 165, 166);
+        } else {
+            backgroundColor = switch (venueName) {
+                case "Hospice Club" -> new Color(231, 76, 60);      // Rojo
+                case "house of mystery" -> new Color(155, 89, 182);  // Púrpura
+                case "Executive Hall" -> new Color(52, 152, 219);    // Azul
+                case "Ocean View Terrace" -> new Color(26, 188, 156); // Verde agua
+                case "Intimate Lounge" -> new Color(241, 196, 15);   // Amarillo
+                default -> new Color(149, 165, 166);                 // Gris
+            };
+        }
+        
+        imagePanel.setBackground(backgroundColor);
+        
+        // Texto simple del nombre del venue
+        String displayText = (venueName != null) ? venueName.substring(0, 1).toUpperCase() : "?";
+        
+        JLabel textLabel = new JLabel(displayText);
+        textLabel.setFont(new Font("Segoe UI", Font.BOLD, 64));
+        textLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        textLabel.setForeground(Color.WHITE);
+        
+        imagePanel.add(textLabel, BorderLayout.CENTER);
     }
     
     private JPanel createServicesPanel() {
