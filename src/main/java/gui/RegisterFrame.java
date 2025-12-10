@@ -17,7 +17,7 @@ public class RegisterFrame extends JFrame {
     
     public RegisterFrame() {
         setTitle("Prestige Events - Register");
-        setSize(500, 700);
+        setSize(640, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         

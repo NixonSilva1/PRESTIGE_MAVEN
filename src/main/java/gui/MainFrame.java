@@ -11,140 +11,222 @@ import services.*;
 
 public class MainFrame extends JFrame {
     private Venue selectedVenue;
-    private double selectedVenuePrice = 0; 
+    private double selectedVenuePrice = 0;
     private final List<AbstractService> selectedServices = new ArrayList<>();
     private JLabel totalLabel;
     private double totalPrice = 0;
     
-    private JTextField nameField, emailField;
+    private JTextField nameField;
+    private JTextField emailField;
     private JSpinner dateSpinner;
     private final JTabbedPane tabbedPane;
-    
+
     public MainFrame() {
         setTitle("Prestige Events - Reservation System");
         setSize(1000, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
+        // BOTÓN DE LOGOUT - AGREGAR AQUÍ
+        setJMenuBar(createMenuBar());
+
         // Panel principal
-        JPanel mainPanel = new JPanel(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBackground(new Color(245, 247, 250));
-        
-        // Panel de pestañas
+
+        // Pestañas
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabbedPane.setBackground(Color.WHITE);
-        tabbedPane.setForeground(new Color(52, 73, 94));
-        
-        // Pestañas
-        tabbedPane.addTab("  1. Client Information  ", createClientPanel());
-        tabbedPane.addTab("  2. Select Venue  ", createVenuePanel());
-        tabbedPane.addTab("  3. Additional Services  ", createServicesPanel());
-        tabbedPane.addTab("  4. Confirm Booking  ", createConfirmationPanel());
-        
+
+        JPanel clientPanel = createClientPanel();
+        JPanel venuePanel = createVenuesPanel();
+        JPanel servicesPanel = createServicesPanel();
+        JPanel confirmPanel = createConfirmPanel();
+
+        tabbedPane.addTab("1. Client Information", clientPanel);
+        tabbedPane.addTab("2. Select Venue", venuePanel);
+        tabbedPane.addTab("3. Additional Services", servicesPanel);
+        tabbedPane.addTab("4. Confirm Booking", confirmPanel);
+
+        // Deshabilitar pestañas (solo navegación con botones)
+        tabbedPane.setEnabledAt(1, false);
+        tabbedPane.setEnabledAt(2, false);
+        tabbedPane.setEnabledAt(3, false);
+
+        // Panel de navegación
+        JPanel navigationPanel = createNavigationPanel();
+
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        
-        // Botones de navegación
-        mainPanel.add(createNavigationPanel(), BorderLayout.SOUTH);
-        
+        mainPanel.add(navigationPanel, BorderLayout.SOUTH);
+
         add(mainPanel);
     }
-    
+
+    // MÉTODO DEL MENÚ BAR CON LOGOUT
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(new Color(52, 73, 94));
+        
+        // Espaciador para empujar el botón a la derecha
+        menuBar.add(Box.createHorizontalGlue());
+        
+        // Información del usuario
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        JLabel userLabel = new JLabel("👤 " + currentUser.getName() + " ");
+        userLabel.setForeground(Color.WHITE);
+        userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        menuBar.add(userLabel);
+        
+        // Botón de logout
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        logoutButton.setBackground(new Color(231, 76, 60));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setFocusPainted(false);
+        logoutButton.setBorderPainted(false);
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutButton.setMargin(new Insets(5, 15, 5, 15));
+        
+        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                logoutButton.setBackground(new Color(192, 57, 43));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                logoutButton.setBackground(new Color(231, 76, 60));
+            }
+        });
+        
+        logoutButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.getInstance().logout();
+                dispose();
+                new WelcomeFrame().setVisible(true);
+            }
+        });
+        
+        menuBar.add(logoutButton);
+        menuBar.add(Box.createRigidArea(new Dimension(10, 0)));
+        
+        return menuBar;
+    }
+
     private JPanel createNavigationPanel() {
-        JPanel navPanel = new JPanel(new BorderLayout());
-        navPanel.setBackground(Color.WHITE);
-        navPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(189, 195, 199)),
-            BorderFactory.createEmptyBorder(15, 30, 15, 30)
-        ));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(245, 247, 250));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        
+        // Panel izquierdo con Previous
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        leftPanel.setBackground(new Color(245, 247, 250));
         
         JButton previousButton = new JButton("← Previous");
-        previousButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        previousButton.setPreferredSize(new Dimension(130, 40));
+        previousButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        previousButton.setPreferredSize(new Dimension(140, 45));
         previousButton.setBackground(new Color(149, 165, 166));
         previousButton.setForeground(Color.WHITE);
         previousButton.setFocusPainted(false);
         previousButton.setBorderPainted(false);
         previousButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        JButton nextButton = new JButton("Next →");
-        nextButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        nextButton.setPreferredSize(new Dimension(130, 40));
-        nextButton.setBackground(new Color(52, 152, 219));
-        nextButton.setForeground(Color.WHITE);
-        nextButton.setFocusPainted(false);
-        nextButton.setBorderPainted(false);
-        nextButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        previousButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                previousButton.setBackground(new Color(127, 140, 141));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                previousButton.setBackground(new Color(149, 165, 166));
+            }
+        });
+        previousButton.addActionListener(e -> {
+            int currentIndex = tabbedPane.getSelectedIndex();
+            if (currentIndex > 0) {
+                tabbedPane.setSelectedIndex(currentIndex - 1);
+            }
+        });
         
         JButton viewReservationsButton = new JButton("View Reservations");
-        viewReservationsButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        viewReservationsButton.setPreferredSize(new Dimension(170, 40));
+        viewReservationsButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        viewReservationsButton.setPreferredSize(new Dimension(180, 45));
         viewReservationsButton.setBackground(new Color(155, 89, 182));
         viewReservationsButton.setForeground(Color.WHITE);
         viewReservationsButton.setFocusPainted(false);
         viewReservationsButton.setBorderPainted(false);
         viewReservationsButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Acciones de los botones
-        previousButton.addActionListener(e -> {
-            int current = tabbedPane.getSelectedIndex();
-            if (current > 0) {
-                tabbedPane.setSelectedIndex(current - 1);
+        viewReservationsButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                viewReservationsButton.setBackground(new Color(142, 68, 173));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                viewReservationsButton.setBackground(new Color(155, 89, 182));
             }
         });
-        
-        nextButton.addActionListener(e -> {
-            int current = tabbedPane.getSelectedIndex();
-            if (current < tabbedPane.getTabCount() - 1) {
-                String validationError = validateCurrentTab(current);
-                    if (validationError != null) {
-                        JOptionPane.showMessageDialog(this,
-                            validationError,
-                            "Validation Error",
-                            JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    tabbedPane.setSelectedIndex(current + 1);
-            }
-        });
-        
         viewReservationsButton.addActionListener(e -> {
             new ViewReservationsFrame().setVisible(true);
         });
         
-        // Hover effects
-        addHoverEffect(previousButton, new Color(149, 165, 166), new Color(127, 140, 141));
-        addHoverEffect(nextButton, new Color(52, 152, 219), new Color(41, 128, 185));
-        addHoverEffect(viewReservationsButton, new Color(155, 89, 182), new Color(142, 68, 173));
-        
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        leftPanel.setBackground(Color.WHITE);
         leftPanel.add(previousButton);
         leftPanel.add(viewReservationsButton);
         
+        // Panel derecho con Next
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rightPanel.setBackground(Color.WHITE);
-        rightPanel.add(nextButton);
+        rightPanel.setBackground(new Color(245, 247, 250));
         
-        navPanel.add(leftPanel, BorderLayout.WEST);
-        navPanel.add(rightPanel, BorderLayout.EAST);
-        
-        return navPanel;
-    }
-    
-    private void addHoverEffect(JButton button, Color normal, Color hover) {
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
+        JButton nextButton = new JButton("Next →");
+        nextButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        nextButton.setPreferredSize(new Dimension(140, 45));
+        nextButton.setBackground(new Color(52, 152, 219));
+        nextButton.setForeground(Color.WHITE);
+        nextButton.setFocusPainted(false);
+        nextButton.setBorderPainted(false);
+        nextButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        nextButton.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(hover);
+                nextButton.setBackground(new Color(41, 128, 185));
             }
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(normal);
+                nextButton.setBackground(new Color(52, 152, 219));
             }
         });
+        nextButton.addActionListener(e -> {
+            int current = tabbedPane.getSelectedIndex();
+            
+            // Validar antes de avanzar
+            String validationError = validateCurrentTab(current);
+            if (validationError != null) {
+                JOptionPane.showMessageDialog(this,
+                    validationError,
+                    "Validation Error",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // Avanzar a la siguiente pestaña
+            if (current < tabbedPane.getTabCount() - 1) {
+                tabbedPane.setSelectedIndex(current + 1);
+            }
+        });
+        
+        rightPanel.add(nextButton);
+        
+        panel.add(leftPanel, BorderLayout.WEST);
+        panel.add(rightPanel, BorderLayout.EAST);
+        
+        return panel;
     }
-    
+
     private String validateCurrentTab(int tabIndex) {
         return switch (tabIndex) {
             case 0 -> { // Client Information
@@ -168,7 +250,7 @@ public class MainFrame extends JFrame {
             default -> null;
         };
     }
-    
+
     private JPanel createClientPanel() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBackground(Color.WHITE);
@@ -311,19 +393,16 @@ public class MainFrame extends JFrame {
         
         return panel;
     }
-    
-    private JPanel createVenuePanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(245, 247, 250));
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        
-        // Título
-        JLabel titleLabel = new JLabel("Select Your Event Venue");
+
+    private JPanel createVenuesPanel() {
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
+
+        JLabel titleLabel = new JLabel("Select Your Venue");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         titleLabel.setForeground(new Color(41, 128, 185));
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        // Panel de lugares
+
         JPanel venuesPanel = new JPanel(new GridLayout(5, 1, 15, 15));
         venuesPanel.setBackground(new Color(245, 247, 250));
         
@@ -341,59 +420,67 @@ public class MainFrame extends JFrame {
         JScrollPane scrollPane = new JScrollPane(venuesPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         return panel;
     }
-    
-    private void addVenueOption(JPanel panel, String name, int capacity, double price, String description) {
-        JPanel venuePanel = new JPanel(new BorderLayout(15, 15));
-        venuePanel.setBackground(Color.WHITE);
-        venuePanel.setBorder(BorderFactory.createCompoundBorder(
+
+    private void addVenueOption(JPanel parent, String name, int capacity, double price, String description) {
+        JPanel panel = new JPanel(new BorderLayout(15, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+            BorderFactory.createEmptyBorder(15, 20, 15, 20)
         ));
         
-        // NUEVO: Panel de imagen a la izquierda
+        // Panel de imagen (izquierda)
         JPanel imagePanel = createVenueImage(name);
         
-        // Información
+        // Panel de información (centro)
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
         
         JLabel nameLabel = new JLabel(name);
-        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         nameLabel.setForeground(new Color(52, 73, 94));
         nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        JLabel capacityLabel = new JLabel("Capacity: " + capacity + " guests");
-        capacityLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JLabel capacityLabel = new JLabel("Capacity: " + capacity + " people");
+        capacityLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         capacityLabel.setForeground(new Color(127, 140, 141));
         capacityLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        JLabel priceLabel = new JLabel("Price: $" + String.format("%.2f", price));
-        priceLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        JLabel priceLabel = new JLabel("Base Price: $" + String.format("%.2f", price));
+        priceLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         priceLabel.setForeground(new Color(46, 204, 113));
         priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        JLabel descLabel = new JLabel("<html>" + description + "</html>");
-        descLabel.setFont(new Font("Segoe UI", Font.ITALIC, 13));
-        descLabel.setForeground(new Color(127, 140, 141));
-        descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // USAR JTextArea PARA DESCRIPCIONES LARGAS
+        JTextArea descriptionArea = new JTextArea(description);
+        descriptionArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        descriptionArea.setForeground(new Color(127, 140, 141));
+        descriptionArea.setBackground(Color.WHITE);
+        descriptionArea.setEditable(false);
+        descriptionArea.setLineWrap(true);           // ✅ Permite saltos de línea
+        descriptionArea.setWrapStyleWord(true);      // ✅ Corta por palabras completas
+        descriptionArea.setRows(3);                  // ✅ Máximo 3 líneas
+        descriptionArea.setBorder(null);             // Sin borde
+        descriptionArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        descriptionArea.setFocusable(false);         // No se puede enfocar
         
         infoPanel.add(nameLabel);
-        infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        infoPanel.add(capacityLabel);
         infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(capacityLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 3)));
         infoPanel.add(priceLabel);
-        infoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        infoPanel.add(descLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        infoPanel.add(descriptionArea);
         
-        // Botón
-        JButton selectButton = new JButton("Select Venue");
+        // Botón de selección (derecha)
+        JButton selectButton = new JButton("Select");
         selectButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         selectButton.setPreferredSize(new Dimension(140, 40));
         selectButton.setBackground(new Color(52, 152, 219));
@@ -402,24 +489,61 @@ public class MainFrame extends JFrame {
         selectButton.setBorderPainted(false);
         selectButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        addHoverEffect(selectButton, new Color(52, 152, 219), new Color(41, 128, 185));
+        selectButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (selectButton.getBackground().equals(new Color(52, 152, 219))) {
+                    selectButton.setBackground(new Color(41, 128, 185));
+                }
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (!selectButton.getBackground().equals(new Color(46, 204, 113))) {
+                    selectButton.setBackground(new Color(52, 152, 219));
+                }
+            }
+        });
         
         selectButton.addActionListener(e -> {
             selectedVenue = new Venue(name, capacity);
             selectedVenuePrice = price;
-            recalculateTotalPrice();
             
-            JOptionPane.showMessageDialog(this, 
-                "Venue Selected!\n" + name + " - $" + String.format("%.2f", price),
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+            // Resetear todos los botones
+            Component[] components = parent.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JPanel venuePanel) {
+                    Component[] venueComponents = venuePanel.getComponents();
+                    for (Component venueComp : venueComponents) {
+                        if (venueComp instanceof JPanel buttonContainer) {
+                            Component[] buttonComponents = buttonContainer.getComponents();
+                            for (Component btnComp : buttonComponents) {
+                                if (btnComp instanceof JButton btn && !btn.equals(selectButton)) {
+                                    btn.setText("Select");
+                                    btn.setBackground(new Color(52, 152, 219));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Marcar como seleccionado
+            selectButton.setText("✓ Selected");
+            selectButton.setBackground(new Color(46, 204, 113));
+            
+            recalculateTotalPrice();
         });
         
-        // NUEVO: Agregar imagen a la izquierda
-        venuePanel.add(imagePanel, BorderLayout.WEST);
-        venuePanel.add(infoPanel, BorderLayout.CENTER);
-        venuePanel.add(selectButton, BorderLayout.EAST);
+        // Panel para el botón (mantener alineación vertical)
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(selectButton);
         
-        panel.add(venuePanel);
+        panel.add(imagePanel, BorderLayout.WEST);
+        panel.add(infoPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.EAST);
+        
+        parent.add(panel);
     }
 
     private JPanel createVenueImage(String venueName) {
@@ -443,7 +567,6 @@ public class MainFrame extends JFrame {
                 java.net.URL imageUrl = getClass().getResource("/images/" + imageName);
                 
                 if (imageUrl != null) {
-                    // Si se encuentra en el classpath
                     ImageIcon originalIcon = new ImageIcon(imageUrl);
                     Image scaledImage = originalIcon.getImage().getScaledInstance(
                         150, 120, Image.SCALE_SMOOTH);
@@ -465,7 +588,6 @@ public class MainFrame extends JFrame {
                         JLabel imageLabel = new JLabel(scaledIcon);
                         imagePanel.add(imageLabel, BorderLayout.CENTER);
                     } else {
-                        // Si tampoco existe el archivo, mostrar placeholder
                         addPlaceholder(imagePanel, venueName);
                     }
                 }
@@ -498,7 +620,7 @@ public class MainFrame extends JFrame {
         
         imagePanel.setBackground(backgroundColor);
         
-        // Texto simple del nombre del venue
+        // Primera letra del venue
         String displayText = (venueName != null) ? venueName.substring(0, 1).toUpperCase() : "?";
         
         JLabel textLabel = new JLabel(displayText);
@@ -508,209 +630,333 @@ public class MainFrame extends JFrame {
         
         imagePanel.add(textLabel, BorderLayout.CENTER);
     }
-    
+
     private JPanel createServicesPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(245, 247, 250));
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
+
         JLabel titleLabel = new JLabel("Additional Services");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         titleLabel.setForeground(new Color(41, 128, 185));
-        
-        JPanel servicesPanel = new JPanel(new GridLayout(5, 1, 15, 15));
+
+        JPanel servicesPanel = new JPanel(new GridLayout(6, 1, 15, 15));
         servicesPanel.setBackground(new Color(245, 247, 250));
-        
+
         addServiceOption(servicesPanel, "Premium Catering", 500, 
-            "Customizable buffet with multiple menu options");
-        addServiceOption(servicesPanel, "Floral Decoration", 300,
-            "Elegant floral arrangements for the entire event");
-        addServiceOption(servicesPanel, "Audio System", 200,
-            "Professional sound equipment with DJ");
-        addServiceOption(servicesPanel, "Photography", 400,
-            "Professional 6-hour photo session");
-        addServiceOption(servicesPanel, "Special Lighting", 250,
-            "LED lights and special effects");
-        
+            "Gourmet menu with multiple course options");
+        addServiceOption(servicesPanel, "Professional Photography", 800,
+            "Full day coverage with edited photos");
+        addServiceOption(servicesPanel, "Live Music Band", 1200,
+            "Professional 4-piece band for 4 hours");
+        addServiceOption(servicesPanel, "Floral Decoration", 600,
+            "Complete venue decoration with premium flowers");
+        addServiceOption(servicesPanel, "Video Recording", 1000,
+            "Professional videography with drone footage");
+        addServiceOption(servicesPanel, "Custom Lighting", 400,
+            "Professional lighting setup and effects");
+
         JScrollPane scrollPane = new JScrollPane(servicesPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         return panel;
     }
-    
-    private void addServiceOption(JPanel panel, String name, double price, String description) {
-        JPanel servicePanel = new JPanel(new BorderLayout(15, 15));
-        servicePanel.setBackground(Color.WHITE);
-        servicePanel.setBorder(BorderFactory.createCompoundBorder(
+
+    private void addServiceOption(JPanel parent, String name, double price, String description) {
+        JPanel panel = new JPanel(new BorderLayout(15, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+            BorderFactory.createEmptyBorder(15, 20, 15, 20)
         ));
-        
+
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
-        
+
         JLabel nameLabel = new JLabel(name);
-        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         nameLabel.setForeground(new Color(52, 73, 94));
-        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
-        JLabel priceLabel = new JLabel("Starting at: $" + String.format("%.2f", price));
-        priceLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+        JLabel priceLabel = new JLabel("$" + String.format("%.2f", price));
+        priceLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         priceLabel.setForeground(new Color(46, 204, 113));
-        priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         JLabel descLabel = new JLabel(description);
         descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         descLabel.setForeground(new Color(127, 140, 141));
-        descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         infoPanel.add(nameLabel);
-        infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         infoPanel.add(priceLabel);
-        infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         infoPanel.add(descLabel);
-        
-        // Si es catering, usar un botón especial
+
+        // Detectar si es "Premium Catering" para abrir el diálogo especial
         if (name.equals("Premium Catering")) {
-            JButton selectButton = new JButton("Select Menu");
-            selectButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            selectButton.setPreferredSize(new Dimension(140, 40));
-            selectButton.setBackground(new Color(52, 152, 219));
-            selectButton.setForeground(Color.WHITE);
-            selectButton.setFocusPainted(false);
-            selectButton.setBorderPainted(false);
-            selectButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            
-            selectButton.addActionListener(e -> {
-                CateringMenuFrame menuFrame = new CateringMenuFrame(this);
-                menuFrame.setVisible(true);
-                
-                if (menuFrame.isConfirmed()) {
+            JButton selectMenuButton = new JButton("Select Menu");
+            selectMenuButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            selectMenuButton.setPreferredSize(new Dimension(140, 40));
+            selectMenuButton.setBackground(new Color(52, 152, 219));
+            selectMenuButton.setForeground(Color.WHITE);
+            selectMenuButton.setFocusPainted(false);
+            selectMenuButton.setBorderPainted(false);
+            selectMenuButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            selectMenuButton.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    if (selectMenuButton.getBackground().equals(new Color(52, 152, 219))) {
+                        selectMenuButton.setBackground(new Color(41, 128, 185));
+                    }
+                }
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    if (!selectMenuButton.getBackground().equals(new Color(46, 204, 113))) {
+                        selectMenuButton.setBackground(new Color(52, 152, 219));
+                    }
+                }
+            });
+
+            selectMenuButton.addActionListener(e -> {
+                CateringMenuFrame cateringFrame = new CateringMenuFrame(this);
+                cateringFrame.setVisible(true);
+
+                if (cateringFrame.isConfirmed()) {
                     // Remover servicio de catering previo si existe
-                    selectedServices.removeIf(s -> s.getName().equals("Catering"));
-                    
-                    // Agregar nuevo servicio con el precio y detalles actualizados
+                    selectedServices.removeIf(s -> s instanceof CateringService);
+
+                    // Agregar nuevo servicio de catering con el precio y detalles
                     CateringService cateringService = new CateringService(
-                        menuFrame.getTotalPrice(),
-                        menuFrame.getSelectionSummary()
+                        cateringFrame.getTotalPrice(),
+                        cateringFrame.getSelectionSummary()
                     );
                     selectedServices.add(cateringService);
-                    
-                    // Recalcular precio total
+
+                    // Cambiar botón a "Selected"
+                    selectMenuButton.setText("✓ Selected");
+                    selectMenuButton.setBackground(new Color(46, 204, 113));
+
                     recalculateTotalPrice();
-                    
-                    selectButton.setText("✓ Selected");
-                    selectButton.setBackground(new Color(46, 204, 113));
-                    
-                    JOptionPane.showMessageDialog(this,
-                        "Catering menu added!\n" + menuFrame.getSelectionSummary() +
-                        "\nPrice: $" + String.format("%.2f", menuFrame.getTotalPrice()),
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
                 }
             });
-            
-            servicePanel.add(infoPanel, BorderLayout.CENTER);
-            servicePanel.add(selectButton, BorderLayout.EAST);
+
+            panel.add(infoPanel, BorderLayout.CENTER);
+            panel.add(selectMenuButton, BorderLayout.EAST);
         } else {
-            // Para otros servicios, usar checkbox normal
-            JCheckBox checkBox = new JCheckBox("Add Service");
-            checkBox.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            // Para otros servicios, usar checkbox
+            JCheckBox checkBox = new JCheckBox();
             checkBox.setBackground(Color.WHITE);
-            checkBox.setForeground(new Color(52, 73, 94));
             checkBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            
             checkBox.addActionListener(e -> {
                 if (checkBox.isSelected()) {
-                    AbstractService service = new CateringService(price);
-                    selectedServices.add(service);
+                    AbstractService service = switch (name) {
+                        case "Professional Photography" -> new PhotographyService();
+                        case "Live Music Band" -> new MusicService();
+                        case "Floral Decoration" -> new DecorationService();
+                        case "Video Recording" -> new VideoService();
+                        case "Custom Lighting" -> new LightingService();
+                        default -> null;
+                    };
+                    if (service != null) {
+                        selectedServices.add(service);
+                    }
                 } else {
-                    selectedServices.removeIf(s -> s.calculatePrice() == price && !s.getName().equals("Catering"));
+                    selectedServices.removeIf(s -> {
+                        String serviceName = s.getClass().getSimpleName();
+                        return serviceName.contains(name.split(" ")[0]);
+                    });
                 }
-                recalculateTotalPrice(); // CAMBIAR ESTA LÍNEA - usar recalculateTotalPrice() en lugar de updateTotal()
+                recalculateTotalPrice();
             });
-                        
-            servicePanel.add(infoPanel, BorderLayout.CENTER);
-            servicePanel.add(checkBox, BorderLayout.EAST);
+
+            panel.add(checkBox, BorderLayout.WEST);
+            panel.add(infoPanel, BorderLayout.CENTER);
         }
-        
-        panel.add(servicePanel);
+
+        parent.add(panel);
     }
-    
-    private JPanel createConfirmationPanel() {
+
+    private JPanel createConfirmPanel() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
-        panel.setBackground(new Color(245, 247, 250));
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        
-        JLabel titleLabel = new JLabel("Booking Summary");
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
+
+        JLabel titleLabel = new JLabel("Confirm Your Booking");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         titleLabel.setForeground(new Color(41, 128, 185));
-        
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Panel central con todo el contenido
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBackground(Color.WHITE);
-        centerPanel.setBorder(BorderFactory.createCompoundBorder(
+
+        // Panel de resumen
+        JPanel summaryPanel = new JPanel();
+        summaryPanel.setLayout(new BoxLayout(summaryPanel, BoxLayout.Y_AXIS));
+        summaryPanel.setBackground(Color.WHITE);
+        summaryPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
-            BorderFactory.createEmptyBorder(40, 40, 40, 40)
+            BorderFactory.createEmptyBorder(25, 30, 25, 30)
         ));
-        
-        JLabel infoLabel = new JLabel("Review your information and confirm the booking");
-        infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        infoLabel.setForeground(new Color(127, 140, 141));
-        infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
+        summaryPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        summaryPanel.setMaximumSize(new Dimension(700, Integer.MAX_VALUE));
+
+        JLabel summaryTitle = new JLabel("Reservation Summary");
+        summaryTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        summaryTitle.setForeground(new Color(52, 73, 94));
+        summaryTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JTextArea summaryText = new JTextArea();
+        summaryText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        summaryText.setForeground(new Color(52, 73, 94));
+        summaryText.setBackground(Color.WHITE);
+        summaryText.setEditable(false);
+        summaryText.setText(generateSummary());
+        summaryText.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         totalLabel = new JLabel("Total: $0.00");
-        totalLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        totalLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         totalLabel.setForeground(new Color(46, 204, 113));
         totalLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        centerPanel.add(infoLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-        centerPanel.add(totalLabel);
-        
-        JButton confirmButton = new JButton("Confirm Booking");
-        confirmButton.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        confirmButton.setPreferredSize(new Dimension(250, 55));
-        confirmButton.setBackground(new Color(231, 76, 60));
+
+        JButton confirmButton = new JButton("Confirm Reservation");
+        confirmButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        confirmButton.setPreferredSize(new Dimension(220, 50));
+        confirmButton.setMaximumSize(new Dimension(220, 50));
+        confirmButton.setBackground(new Color(46, 204, 113));
         confirmButton.setForeground(Color.WHITE);
         confirmButton.setFocusPainted(false);
         confirmButton.setBorderPainted(false);
         confirmButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        addHoverEffect(confirmButton, new Color(231, 76, 60), new Color(192, 57, 43));
-        
+        confirmButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         confirmButton.addActionListener(e -> confirmReservation());
-        
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(new Color(245, 247, 250));
-        buttonPanel.add(confirmButton);
-        
+
+        summaryPanel.add(summaryTitle);
+        summaryPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        summaryPanel.add(summaryText);
+        summaryPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        summaryPanel.add(totalLabel);
+        summaryPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        summaryPanel.add(confirmButton);
+
+        // Panel de información de contacto
+        JPanel contactPanel = new JPanel();
+        contactPanel.setLayout(new BoxLayout(contactPanel, BoxLayout.Y_AXIS));
+        contactPanel.setBackground(new Color(236, 240, 241));
+        contactPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        contactPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        contactPanel.setMaximumSize(new Dimension(700, Integer.MAX_VALUE));
+
+        JLabel contactTitle = new JLabel("Contact Information");
+        contactTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        contactTitle.setForeground(new Color(52, 73, 94));
+        contactTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel companyName = new JLabel("Prestige Events LLC");
+        companyName.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        companyName.setForeground(new Color(41, 128, 185));
+        companyName.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel phoneLabel = new JLabel("📞 Phone: +1 (555) 123-4567");
+        phoneLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        phoneLabel.setForeground(new Color(52, 73, 94));
+        phoneLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel emailLabel = new JLabel("✉️ Email: info@prestigeevents.com");
+        emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        emailLabel.setForeground(new Color(52, 73, 94));
+        emailLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel addressLabel = new JLabel("📍 Address: 123 Event Plaza, New York, NY 10001");
+        addressLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        addressLabel.setForeground(new Color(52, 73, 94));
+        addressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel hoursLabel = new JLabel("🕐 Business Hours: Mon-Fri 9:00 AM - 6:00 PM");
+        hoursLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        hoursLabel.setForeground(new Color(52, 73, 94));
+        hoursLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        contactPanel.add(contactTitle);
+        contactPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        contactPanel.add(companyName);
+        contactPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        contactPanel.add(phoneLabel);
+        contactPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        contactPanel.add(emailLabel);
+        contactPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        contactPanel.add(addressLabel);
+        contactPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        contactPanel.add(hoursLabel);
+
+        centerPanel.add(summaryPanel);
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        centerPanel.add(contactPanel);
+
         panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(centerPanel, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
-    private void updateTotal() {
-        totalLabel.setText("Total: $" + String.format("%.2f", totalPrice));
+
+    private String generateSummary() {
+        StringBuilder summary = new StringBuilder();
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        
+        summary.append("Client: ").append(currentUser.getName()).append("\n");
+        summary.append("Email: ").append(currentUser.getEmail()).append("\n");
+        
+        if (dateSpinner != null && dateSpinner.getValue() != null) {
+            summary.append("Event Date: ").append(dateSpinner.getValue()).append("\n");
+        }
+        
+        summary.append("\n");
+
+        if (selectedVenue != null) {
+            summary.append("Venue: ").append(selectedVenue.getName()).append("\n");
+            summary.append("Capacity: ").append(selectedVenue.getCapacity()).append(" people\n");
+            summary.append("Venue Price: $").append(String.format("%.2f", selectedVenuePrice)).append("\n\n");
+        }
+
+        if (!selectedServices.isEmpty()) {
+            summary.append("Selected Services:\n");
+            for (AbstractService service : selectedServices) {
+                if (service != null) {  // ✅ Verificar que no sea null
+                    if (service instanceof CateringService cateringService) {
+                        summary.append("• ").append(cateringService.getMenuDetails())
+                            .append(" - $").append(String.format("%.2f", service.calculatePrice())).append("\n");
+                    } else {
+                        String serviceName = service.getClass().getSimpleName().replace("Service", "");
+                        summary.append("• ").append(serviceName)
+                            .append(" - $").append(String.format("%.2f", service.calculatePrice())).append("\n");
+                    }
+                }
+            }
+        }
+
+        return summary.toString();
     }
-    
+
     private void recalculateTotalPrice() {
-        // Inicializar con el precio del venue guardado
         totalPrice = selectedVenuePrice;
         
-        // Agregar precio de todos los servicios
         for (AbstractService service : selectedServices) {
             totalPrice += service.calculatePrice();
         }
         
         updateTotal();
+    }
+
+    private void updateTotal() {
+        if (totalLabel != null) {
+            totalLabel.setText("Total: $" + String.format("%.2f", totalPrice));
+        }
     }
 
     private void confirmReservation() {
@@ -728,8 +974,6 @@ public class MainFrame extends JFrame {
                 "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        // YA NO ES NECESARIO VALIDAR nameField y emailField porque vienen del usuario logueado
         
         try {
             // Usar el usuario logueado directamente
@@ -773,35 +1017,31 @@ public class MainFrame extends JFrame {
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void showSuccessDialog() {
-        JDialog successDialog = new JDialog(this, "Booking Confirmed!", true);
-        successDialog.setSize(500, 350);
+        JDialog successDialog = new JDialog(this, "Reservation Confirmed!", true);
+        successDialog.setSize(450, 300);
         successDialog.setLocationRelativeTo(this);
-        successDialog.setLayout(new BorderLayout(20, 20));
         
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setBackground(Color.WHITE);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Ícono de éxito
         JLabel iconLabel = new JLabel("✓");
         iconLabel.setFont(new Font("Segoe UI", Font.BOLD, 72));
         iconLabel.setForeground(new Color(46, 204, 113));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        JLabel titleLabel = new JLabel("Booking Confirmed Successfully!");
+        JLabel titleLabel = new JLabel("Reservation Successful!");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setForeground(new Color(52, 73, 94));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         JLabel messageLabel = new JLabel("<html><center>" +
-            "Your reservation has been scheduled!<br><br>" +
-            "Total: <b>$" + String.format("%.2f", totalPrice) + "</b><br><br>" +
-            "You will receive a confirmation email shortly.<br><br>" +
-            "To view your reservations, click on<br>" +
-            "<b>'View Reservations'</b> in the main menu." +
+            "Your reservation has been confirmed!<br><br>" +
+            "Total Amount: <b>$" + String.format("%.2f", totalPrice) + "</b><br><br>" +
+            "You can view your reservation details in 'View Reservations'" +
             "</center></html>");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         messageLabel.setForeground(new Color(127, 140, 141));
@@ -819,15 +1059,15 @@ public class MainFrame extends JFrame {
         okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         okButton.addActionListener(e -> successDialog.dispose());
         
-        contentPanel.add(iconLabel);
-        contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        contentPanel.add(titleLabel);
-        contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        contentPanel.add(messageLabel);
-        contentPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-        contentPanel.add(okButton);
+        panel.add(iconLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+        panel.add(titleLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+        panel.add(messageLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 25)));
+        panel.add(okButton);
         
-        successDialog.add(contentPanel);
+        successDialog.add(panel);
         successDialog.setVisible(true);
     }
 }
