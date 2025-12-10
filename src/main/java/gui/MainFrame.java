@@ -280,15 +280,15 @@ public class MainFrame extends JFrame {
         venuesPanel.setBackground(new Color(245, 247, 250));
         
         addVenueOption(venuesPanel, "Hospice Club", 150, 5000, 
-            "Our largest venue, perfect for weddings and corporate events");
+            "On the premises, you will find three event halls: Pesebreras, Kiosco, and Vivero, for 150 people, as well as a swimming pool, patio, park, Las Marías, and much more. All of them stand out for their colonial touches and cozy atmosphere. At Caminito de Piedra, you will also find the following spaces:");
         addVenueOption(venuesPanel, "house of mystery", 80, 3500,
-            "Outdoor space with beautiful greenery, perfect for ceremonies");
+            "Surrounded by nature, its countryside settings offer the perfect balance between city comfort and the serenity of the countryside. Enjoy a hall with a capacity for 140 people, ideal for your grand celebration, and an outdoor area for 100 people, perfect for ceremonies, cocktails, or receptions surrounded by natural beauty.");
         addVenueOption(venuesPanel, "Executive Hall", 50, 2500,
-            "Professional environment with state-of-the-art audiovisual equipment");
+            "If what you want is a wedding worthy of the best and in a spectacular location, Casa Duque is and will be the place. The house is located 1 hour from Bogotá, just before reaching El Rosal. You will live the ceremony of your dreams! Say 'I do' in a magical outdoor setting and continue the rest of the evening in the same venue, no need to travel!");
         addVenueOption(venuesPanel, "Ocean View Terrace", 100, 4000,
-            "Terrace with panoramic views, ideal for sunset events");
+            "An unbeatable space to live that dream wedding is Weddings Cancun Marina. Their Club House located on a dock in the Nichupte lagoon offers spectacular views to enjoy with their loved ones while they pronounce loud and clear that \"I do\" that they crave more and more every day.");
         addVenueOption(venuesPanel, "Intimate Lounge", 30, 1800,
-            "Cozy space for small and family events");
+            "El Sauce Restaurant Park is a spacious and comfortable countryside venue that offers recreational and event services with quality to the residents of Bogotá and its surroundings. Surrounded by extensive green areas for enjoyment and leisure, it is perfect for sharing pleasant moments with family. It offers halls for rent so that you can enjoy the celebration you deserve.");
         
         JScrollPane scrollPane = new JScrollPane(venuesPanel);
         scrollPane.setBorder(null);
