@@ -16,7 +16,7 @@ public class MainFrame extends JFrame {
     private JLabel totalLabel;
     private double totalPrice = 0;
     
-    private JTextField nameField, emailField, passwordField;
+    private JTextField nameField, emailField;
     private JSpinner dateSpinner;
     private final JTabbedPane tabbedPane;
     
@@ -96,9 +96,15 @@ public class MainFrame extends JFrame {
         nextButton.addActionListener(e -> {
             int current = tabbedPane.getSelectedIndex();
             if (current < tabbedPane.getTabCount() - 1) {
-                if (validateCurrentTab(current)) {
+                String validationError = validateCurrentTab(current);
+                    if (validationError != null) {
+                        JOptionPane.showMessageDialog(this,
+                            validationError,
+                            "Validation Error",
+                            JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
                     tabbedPane.setSelectedIndex(current + 1);
-                }
             }
         });
         
@@ -139,127 +145,169 @@ public class MainFrame extends JFrame {
         });
     }
     
-    private boolean validateCurrentTab(int tabIndex) {
+    private String validateCurrentTab(int tabIndex) {
         return switch (tabIndex) {
             case 0 -> { // Client Information
-                if (nameField.getText().trim().isEmpty() ||
-                        emailField.getText().trim().isEmpty() ||
-                        passwordField.getText().trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this,
-                            "Please complete all client information fields",
-                            "Validation Error", JOptionPane.WARNING_MESSAGE);
-                    yield false;
+                // Ya no validamos nameField ni emailField porque vienen del usuario logueado
+                // Solo verificamos que haya una fecha seleccionada
+                if (dateSpinner.getValue() == null) {
+                    yield "Please select an event date";
                 }
-                yield true;
+                yield null; // Todo está bien
             }
             case 1 -> { // Venue Selection
                 if (selectedVenue == null) {
-                    JOptionPane.showMessageDialog(this,
-                            "Please select a venue for your event",
-                            "Validation Error", JOptionPane.WARNING_MESSAGE);
-                    yield false;
+                    yield "Please select a venue before proceeding";
                 }
-                yield true;
+                yield null;
             }
-            default -> true;
+            case 2 -> { // Services
+                // Opcional: no requerimos servicios
+                yield null;
+            }
+            default -> null;
         };
     }
     
     private JPanel createClientPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(245, 247, 250));
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
         // Título
         JLabel titleLabel = new JLabel("Client Information");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         titleLabel.setForeground(new Color(41, 128, 185));
         
-        // Panel del formulario
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(Color.WHITE);
-        formPanel.setBorder(BorderFactory.createCompoundBorder(
+        // Panel de información del usuario
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
-            BorderFactory.createEmptyBorder(40, 50, 40, 50)
+            BorderFactory.createEmptyBorder(30, 40, 30, 40)
         ));
         
+        // Obtener usuario logueado
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        
+        // Panel de bienvenida
+        JPanel welcomePanel = new JPanel();
+        welcomePanel.setLayout(new BoxLayout(welcomePanel, BoxLayout.Y_AXIS));
+        welcomePanel.setBackground(new Color(236, 240, 241));
+        welcomePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        welcomePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel welcomeLabel = new JLabel("Welcome, " + currentUser.getName() + "!");
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        welcomeLabel.setForeground(new Color(52, 73, 94));
+        
+        JLabel accountLabel = new JLabel("Account: " + currentUser.getEmail());
+        accountLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        accountLabel.setForeground(new Color(127, 140, 141));
+        
+        JLabel typeLabel = new JLabel("User Type: " + (currentUser.isAdmin() ? "Administrator" : "Client"));
+        typeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        typeLabel.setForeground(new Color(127, 140, 141));
+        
+        welcomePanel.add(welcomeLabel);
+        welcomePanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        welcomePanel.add(accountLabel);
+        welcomePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        welcomePanel.add(typeLabel);
+        
+        // Información del cliente (solo lectura)
+        JPanel clientDataPanel = new JPanel(new GridBagLayout());
+        clientDataPanel.setBackground(Color.WHITE);
+        clientDataPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 15, 15, 15);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
-        // Full Name
+        // Full Name (solo lectura)
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 0;
         JLabel nameLabel = new JLabel("Full Name:");
-        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        formPanel.add(nameLabel, gbc);
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        nameLabel.setForeground(new Color(52, 73, 94));
+        clientDataPanel.add(nameLabel, gbc);
         
         gbc.gridx = 1;
         gbc.weightx = 1.0;
-        nameField = new JTextField(25);
+        nameField = new JTextField(currentUser.getName());
         nameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        nameField.setPreferredSize(new Dimension(400, 40));
+        nameField.setEditable(false);
+        nameField.setBackground(new Color(236, 240, 241));
         nameField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199)),
             BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
-        formPanel.add(nameField, gbc);
+        clientDataPanel.add(nameField, gbc);
         
-        // Email
+        // Email (solo lectura)
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
         JLabel emailLabel = new JLabel("Email:");
-        emailLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        formPanel.add(emailLabel, gbc);
+        emailLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        emailLabel.setForeground(new Color(52, 73, 94));
+        clientDataPanel.add(emailLabel, gbc);
         
         gbc.gridx = 1;
         gbc.weightx = 1.0;
-        emailField = new JTextField(25);
+        emailField = new JTextField(currentUser.getEmail());
         emailField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        emailField.setPreferredSize(new Dimension(400, 40));
+        emailField.setEditable(false);
+        emailField.setBackground(new Color(236, 240, 241));
         emailField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199)),
             BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
-        formPanel.add(emailField, gbc);
+        clientDataPanel.add(emailField, gbc);
         
-        // Password
+        // Event Date (EDITABLE)
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        JLabel passLabel = new JLabel("Password:");
-        passLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        formPanel.add(passLabel, gbc);
-        
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        passwordField = new JPasswordField(25);
-        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        passwordField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(189, 195, 199)),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
-        formPanel.add(passwordField, gbc);
-        
-        // Event Date
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.weightx = 0;
         JLabel dateLabel = new JLabel("Event Date:");
-        dateLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        formPanel.add(dateLabel, gbc);
+        dateLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        dateLabel.setForeground(new Color(52, 73, 94));
+        clientDataPanel.add(dateLabel, gbc);
         
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         SpinnerDateModel dateModel = new SpinnerDateModel();
         dateSpinner = new JSpinner(dateModel);
         dateSpinner.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        JSpinner.DateEditor editor = new JSpinner.DateEditor(dateSpinner, "MMM dd, yyyy");
-        dateSpinner.setEditor(editor);
-        formPanel.add(dateSpinner, gbc);
+        dateSpinner.setPreferredSize(new Dimension(400, 40));
+        
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "MMM dd, yyyy");
+        dateSpinner.setEditor(dateEditor);
+        dateEditor.getTextField().setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        dateEditor.getTextField().setBackground(Color.WHITE);
+        dateEditor.getTextField().setEditable(false);
+        
+        clientDataPanel.add(dateSpinner, gbc);
+        
+        // Nota informativa
+        JLabel noteLabel = new JLabel("<html><i>Your account information is pre-filled. Select your event date below.</i></html>");
+        noteLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        noteLabel.setForeground(new Color(127, 140, 141));
+        noteLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        infoPanel.add(welcomePanel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+        infoPanel.add(clientDataPanel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        infoPanel.add(noteLabel);
         
         panel.add(titleLabel, BorderLayout.NORTH);
-        panel.add(formPanel, BorderLayout.CENTER);
+        panel.add(infoPanel, BorderLayout.CENTER);
         
         return panel;
     }
@@ -666,20 +714,26 @@ public class MainFrame extends JFrame {
     }
 
     private void confirmReservation() {
+        // Verificar que el usuario esté logueado
+        if (!SessionManager.getInstance().isLoggedIn()) {
+            JOptionPane.showMessageDialog(this,
+                "You must be logged in to make a reservation",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         if (selectedVenue == null) {
             JOptionPane.showMessageDialog(this, "Please select a venue", 
                 "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
-        if (nameField.getText().trim().isEmpty() || emailField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please complete all fields", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        // YA NO ES NECESARIO VALIDAR nameField y emailField porque vienen del usuario logueado
         
         try {
-            User user = new User(nameField.getText(), emailField.getText(), passwordField.getText());
+            // Usar el usuario logueado directamente
+            User user = SessionManager.getInstance().getCurrentUser();
             
             java.util.Date selectedDate = (java.util.Date) dateSpinner.getValue();
             LocalDate eventDate = LocalDate.ofInstant(selectedDate.toInstant(), 
@@ -691,7 +745,6 @@ public class MainFrame extends JFrame {
             // Validar si ya existe una reserva en ese lugar y fecha
             if (reservationService.isVenueAvailable(selectedVenue.getName(), eventDate)) {
                 
-                // IMPORTANTE: Crear la reservación pasando el precio del venue
                 Reservation reservation = new Reservation(user, eventDate, selectedVenue);
                 
                 // Agregar todos los servicios
@@ -702,11 +755,11 @@ public class MainFrame extends JFrame {
                 // Guardar la reservación
                 repo.add(reservation);
                 
-                // Mensaje de éxito mejorado
+                // Mensaje de éxito
                 showSuccessDialog();
                 
                 dispose();
-                new WelcomeFrame().setVisible(true);
+                new MainFrame().setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this,
                     """

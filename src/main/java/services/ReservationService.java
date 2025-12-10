@@ -5,6 +5,7 @@ import domain.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReservationService {
     private final ReservationRepository repository;
@@ -26,15 +27,37 @@ public class ReservationService {
         return repository.getAll();
     }
     
+    public List<Reservation> getReservationsByUser(String userEmail) throws Exception {
+        List<Reservation> allReservations = repository.getAll();
+        return allReservations.stream()
+            .filter(r -> r.getUser().getEmail().equals(userEmail))
+            .collect(Collectors.toList());
+    }
+    
     // Método para verificar si un lugar está disponible en una fecha
     public boolean isVenueAvailable(String venueName, LocalDate date) throws Exception {
         List<Reservation> allReservations = repository.getAll();
         for (Reservation reservation : allReservations) {
             if (reservation.getVenue().getName().equals(venueName) && 
                 reservation.getDate().equals(date)) {
-                return false; // Ya existe una reserva
+                return false;
             }
         }
-        return true; // Disponible
+        return true;
+    }
+    
+    // Método para actualizar el estado de pago de una reservación
+    public void updatePaymentStatus(Reservation reservation, String status) throws Exception {
+        List<Reservation> allReservations = repository.getAll();
+        for (int i = 0; i < allReservations.size(); i++) {
+            Reservation r = allReservations.get(i);
+            if (r.getUser().getEmail().equals(reservation.getUser().getEmail()) &&
+                r.getDate().equals(reservation.getDate()) &&
+                r.getVenue().getName().equals(reservation.getVenue().getName())) {
+                r.setPaymentStatus(status);
+                break;
+            }
+        }
+        repository.updateAll(allReservations);
     }
 }

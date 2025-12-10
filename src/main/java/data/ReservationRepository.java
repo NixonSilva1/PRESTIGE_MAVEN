@@ -1,7 +1,7 @@
 package data;
 
-import java.util.*;
 import domain.Reservation;
+import java.util.*;
 
 public class ReservationRepository {
     private final FileRepository<Reservation> repo = new FileRepository<>("reservations.dat");
@@ -14,5 +14,9 @@ public class ReservationRepository {
 
     public List<Reservation> getAll() throws Exception {
         return repo.loadAll();
+    }
+    
+    public void updateAll(List<Reservation> reservations) throws Exception {
+        repo.saveAll(reservations);
     }
 }

@@ -8,17 +8,25 @@ public class User implements Serializable {
     private final String name;
     private final String email;
     private final String password;
-    
-    public User(String name, String email, String password) {
-        this.name = name; 
-        this.email = email; 
-        this.password = password;
+    private final String userType; // "CLIENT" o "ADMIN"
+
+    public User(String n, String e, String p) {
+        this(n, e, p, "CLIENT"); // Por defecto es cliente
     }
     
-    public boolean login(String e, String p) { 
-        return email.equals(e) && password.equals(p); 
+    public User(String n, String e, String p, String type) {
+        name = n; 
+        email = e; 
+        password = p;
+        userType = type;
     }
-    
-    public String getEmail() { return email; }
+
     public String getName() { return name; }
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
+    public String getUserType() { return userType; }
+    
+    public boolean isAdmin() {
+        return "ADMIN".equals(userType);
+    }
 }
